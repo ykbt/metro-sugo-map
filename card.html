@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>カードルーレット</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    .slot-container {
+      width: 500px;
+      height: 100px;
+      margin: 0 auto;
+      overflow: hidden;
+      border: 2px solid #333;
+      position: relative;
+    }
+
+    .slot-list {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
+
+    .slot-item {
+        height: 100px;
+        line-height: 100px;
+        font-weight: bold;
+        font-size: 2.5rem;
+        background: rgb(0, 0, 84);       /* 暗い背景 */
+        color: #fff;            /* 白文字 */
+    }
+
+    button {
+      margin-top: 30px;
+      font-size: 1.2rem;
+      padding: 10px 20px;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 1.4rem;
+      color: #2c3e50;
+    }
+  </style>
+</head>
+<body>
+  <h1>カードルーレット</h1>
+  <div class="slot-container">
+    <div class="slot-list" id="slotList"></div>
+  </div>
+  <button id="toggleBtn">スタート</button>
+  <div id="result"></div>
+
+  <script>
+    const options = ['急行カード', '特急カード', '新幹線カード', 'ぶっとびカード'];
+    const slotList = document.getElementById('slotList');
+    const btn = document.getElementById('toggleBtn');
+    const result = document.getElementById('result');
+    
+    let position = 0;
+    let speed = 10;
+    let isSpinning = false;
+    let isStopping = false;
+    let animationFrameId;
+    let decelerationRate = 0.95; // デフォルト値（変更される）
+
+    function setupSlot() {
+      const items = [...options, ...options]; // ループ用
+      slotList.innerHTML = '';
+      items.forEach(text => {
+        const div = document.createElement('div');
+        div.className = 'slot-item';
+        div.textContent = text;
+        slotList.appendChild(div);
+      });
+    }
+
+    function spin() {
+        position += speed;
+        if (position >= slotList.scrollHeight / 2) position = 0;
+        slotList.style.top = `-${position}px`;
+
+        if (isStopping) {
+            speed *= decelerationRate;
+            if (speed <= 0.5) {
+            cancelAnimationFrame(animationFrameId);
+            finalize();
+            return;
+            }
+        }
+
+        animationFrameId = requestAnimationFrame(spin);
+    }
+
+    btn.addEventListener('click', () => {
+        if (!isSpinning && !isStopping) {
+            // スタート
+            setupSlot();
+            position = 0;
+            slotList.style.top = '0px';
+            result.textContent = '';
+            speed = 10;
+            isSpinning = true;
+            isStopping = false;
+            isSlowingDown = false;
+            btn.textContent = 'ストップ';
+            spin();
+        } else if (isSpinning && !isStopping) {
+            // ストップが押された → ランダムに減速開始
+            isStopping = true;
+            isSpinning = false;
+            btn.disabled = true;
+
+            decelerationRate = 0.90 + Math.random() * 0.08; // 減速率をランダムに決定
+
+            const delay = 1000 + Math.random() * 6000; // 1〜7秒後に減速開始
+            setTimeout(() => {
+            isSlowingDown = true;
+            }, delay);
+        }
+    });
+
+    function finalize() {
+        speed = 10;
+        isStopping = false;
+        const itemHeight = 100;
+        const rawIndex = position / itemHeight;
+        const nearestIndex = Math.round(rawIndex) % options.length;
+        const snappedPosition = nearestIndex * itemHeight;
+        slotList.style.top = `-${snappedPosition}px`;
+
+        const selected = options[nearestIndex];
+        result.textContent = `選ばれたのは「${selected}」です！`;
+
+        btn.disabled = false;
+        btn.textContent = 'スタート';
+    }
+
+    setupSlot();
+  </script>
+</body>
+</html>
