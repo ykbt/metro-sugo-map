@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>カードルーレット</title>
+  <title>カードスロット</title>
   <style>
     body {
       font-family: sans-serif;
@@ -49,7 +49,7 @@
   </style>
 </head>
 <body>
-  <h1>カードルーレット</h1>
+  <h1>カードスロット</h1>
   <div class="slot-container">
     <div class="slot-list" id="slotList"></div>
   </div>
@@ -68,16 +68,27 @@
     let isStopping = false;
     let animationFrameId;
     let decelerationRate = 0.95; // デフォルト値（変更される）
+    let currentSlotItems = [];
+
+    function shuffle(array) {
+        const copy = [...array];
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+    }
 
     function setupSlot() {
-      const items = [...options, ...options]; // ループ用
-      slotList.innerHTML = '';
-      items.forEach(text => {
-        const div = document.createElement('div');
-        div.className = 'slot-item';
-        div.textContent = text;
-        slotList.appendChild(div);
-      });
+        currentSlotItems = shuffle(options);
+        const items = [...currentSlotItems, ...currentSlotItems]; // ループ用
+        slotList.innerHTML = '';
+        items.forEach(text => {
+            const div = document.createElement('div');
+            div.className = 'slot-item';
+            div.textContent = text;
+            slotList.appendChild(div);
+        });
     }
 
     function spin() {
@@ -134,7 +145,7 @@
         const snappedPosition = nearestIndex * itemHeight;
         slotList.style.top = `-${snappedPosition}px`;
 
-        const selected = options[nearestIndex];
+        const selected = currentSlotItems[nearestIndex];
         result.textContent = `選ばれたのは「${selected}」です！`;
 
         btn.disabled = false;

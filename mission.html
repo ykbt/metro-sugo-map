@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ミッションルーレット</title>
+  <style>
+    body { text-align: center; font-family: sans-serif; margin-top: 50px; }
+    canvas { border: 2px solid #333; border-radius: 50%; }
+    #detailBox { margin-top: 30px; font-size: 20px; }
+    button {
+      margin-top: 20px;
+      font-size: 20px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>ミッションルーレット</h1>
+  <canvas id="wheel" width="400" height="400"></canvas>
+  <div><button onclick="spin()">スタート</button></div>
+  <div id="detailBox"></div>
+
+  <script>
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 180;
+
+    const choices = [
+      { name: "マスコット",   detail: "駅構内から出てマスコットを探す", color: "#3498db" },
+      { name: "買い物",   detail: "駅構内から出てどこかで買い物をする（所持金0円の場合はスキップ）", color: "#e74c3c" },
+      { name: "食事",   detail: "駅構内から出てどこかで食事をする（所持金0円の場合はスキップ）", color: "#2ecc71" },
+      { name: "なし",   detail: "無条件で報酬が貰える",   color: "#f1c40f" },
+      { name: "公園", detail: "街にある公園を見つける",             color: "#9b59b6" },
+      { name: "隣へ",   detail: "一駅となりへ進める（徒歩で）",                   color: "#e67e22" },
+      { name: "倍増",   detail: "もう一度回して、出たミッションを二回達成する必要がある",  color: "#f57a7a" },
+      { name: "酒",   detail: "酒を1杯飲む",  color: "#7aa3f5" }
+    ];
+
+    let angle = 0;
+    let spinning = false;
+    let angularVelocity = 0;
+
+    function drawWheel() {
+      const sliceAngle = 2 * Math.PI / choices.length;
+      for (let i = 0; i < choices.length; i++) {
+        const startAngle = angle + i * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.fillStyle = choices[i].color;
+        ctx.fill();
+        ctx.stroke();
+
+        // テキスト描画
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#fff";
+        ctx.font = "16px sans-serif";
+        ctx.fillText(choices[i].name, radius - 10, 5);
+        ctx.restore();
+      }
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - radius + 10); // 頂点（中心を向く）
+        ctx.lineTo(centerX - 10, centerY - radius - 10);
+        ctx.lineTo(centerX + 10, centerY - radius - 10);
+        ctx.closePath();
+        ctx.fillStyle = "red";
+        ctx.fill();
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function spin() {
+        if (spinning) return;
+        spinning = true;
+
+        const button = document.querySelector("button");
+        button.disabled = true;
+
+        // 🔀 並び順をランダムに変更
+        shuffle(choices);
+
+        angularVelocity = Math.random() * 0.2 + 0.3;
+        const stopThreshold = Math.random() * 0.015 + 0.005;
+
+        const slowDown = setInterval(() => {
+            angle += angularVelocity;
+            angle %= 2 * Math.PI;
+            angularVelocity *= 0.97;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawWheel();
+
+            if (angularVelocity < stopThreshold) {
+            clearInterval(slowDown);
+            spinning = false;
+            showResult();
+            button.disabled = false;
+            }
+        }, 30);
+    }
+
+
+
+    function showResult() {
+        const sliceAngle = 2 * Math.PI / choices.length;
+        const pointerAngle = (Math.PI * 3 / 2 - angle + 2 * Math.PI) % (2 * Math.PI);
+        const index = Math.floor(pointerAngle / sliceAngle);
+        const result = choices[index];
+        document.getElementById("detailBox").innerHTML = `<strong>選ばれたのは: ${result.name}</strong><br>${result.detail}`;
+    }
+
+    // 初期描画
+    drawWheel();
+  </script>
+
+</body>
+</html>
